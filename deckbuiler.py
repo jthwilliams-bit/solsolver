@@ -1,10 +1,11 @@
 # DeckBuilder class for building and managing the deck of cards for solitaire game
 import random
 from time import time
+from typing import Optional
 from card import Card
 
 class DeckBuilder:
-    def __init__(self, seed: int = None):
+    def __init__(self, seed: Optional[int] = None):
         self.cards = [Card(suit, rank) for suit in Card.SUITS for rank in Card.RANKS]
         if seed is not None:
             random.seed(seed)
