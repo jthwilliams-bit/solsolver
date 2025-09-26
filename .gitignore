@@ -174,3 +174,4 @@ scrap.py
 .github/*
 __pycache__/
 __pycache__/*
+unknown.json
