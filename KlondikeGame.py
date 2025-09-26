@@ -102,7 +102,16 @@ class KlondikeGame(SolitaireGame):
            move.destination in [Position.Column1, Position.Column2, Position.Column3, Position.Column4, 
                                 Position.Column5, Position.Column6, Position.Column7]:
             return self.move_tableau_to_tableau(move)      
+        
+        # Case 2: moving from stock to waste
+        elif move.source == Position.Stock and move.destination == Position.Waste:
+            return self.move_stock_to_waste(move)
+        # Case 3: moving from waste to tableau 
+        elif move.source == Position.Waste and move.destination in [Position.Column1, Position.Column2, Position.Column3, Position.Column4, 
+                                Position.Column5, Position.Column6, Position.Column7]:
+            return self.move_waste_to_column(move)
         return False
+
 
     
     def move_tableau_to_tableau(self, move: KlondikeMove) -> bool:
@@ -199,7 +208,38 @@ class KlondikeGame(SolitaireGame):
                 return True
         return False
 
+    def move_stock_to_waste(self, move: KlondikeMove) -> bool:
+        if move.source == Position.Stock and move.destination == Position.Waste:
+            if not self.deck.cards:
+                # if the stock is empty restock the stock from the waste pile
+                # if waste is also empty do nothing and return false
+                if not self.waste:
+                    print("Both stock and waste are empty, cannot move")
+                    return False
+                self.deck.cards = self.waste[::-1]  # reverse the waste to maintain order
+                self.waste = []
+                print("Restocked the stock from the waste pile")
+                return False
+            for _ in range(self.draw_count if self.draw_count and self.draw_count > 0 else 1):
+                if self.deck.cards:
+                    card = self.deck.cards.pop()
+                    self.waste.append(card)
+                    print(f"Moved card {card} from stock to waste")
+            return True
+        return False
 
+    def move_waste_to_column(self, move: KlondikeMove) -> bool:
+        if move.source in [ Position.Waste] and move.destination in [Position.Column1, Position.Column2, 
+                                                                     Position.Column3, Position.Column4, Position.Column5,
+                                                                      Position.Column6, Position.Column7 ]:
+            if self.waste:
+                card = self.waste.pop()
+                dest_index = move.destination.value[-1]
+                self.tableau_face_up[int(dest_index)-1].append(card)
+                print(f"Moved card {card} from waste to column {move.destination}")
+                return True
+        return False
+        
 
     def save_game(self, filename: str):
         # Prepare the Layout.json template structure
@@ -325,9 +365,17 @@ if __name__ == "__main__":
     game.move(KlondikeMove(Position.Column3, Position.Column7, 2))
     print( "-------------------" )
 
-
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    print( "-------------------" )
 
     game.draw_layout_console()
+
+    game.move(KlondikeMove(Position.Waste, Position.Column5, 1))
+    print( "-------------------" )
+
+    game.draw_layout_console()
+
+    
 
 
 
