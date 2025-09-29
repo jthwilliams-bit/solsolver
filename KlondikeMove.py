@@ -26,8 +26,7 @@ class KlondikeMove:
     
 if __name__ == "__main__":
 
-    for pos in Position:
-        for dest in Position:
-            if pos != dest:
-                move = KlondikeMove(pos, dest, 1)
-                print(move)
+    pos = Position["Foundation1"]
+    print(pos)
+
+    

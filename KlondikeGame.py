@@ -51,9 +51,9 @@ class KlondikeGame(SolitaireGame):
         if self.waste:
             for i in range(min(3, len(self.waste))):
                 if i == 0:
-                    print(f"Waste top: {self.waste[-1 - i]}")
+                    print(f"Waste top: {self.waste[-1 - i].FormatedforConsole()}")
                 else:
-                    print(f"Waste {i+1}: {self.waste[-1 - i]}")
+                    print(f"Waste {i+1}: {self.waste[-1 - i].FormatedforConsole()}")
         else:
             print("Waste: Empty")
 
@@ -64,12 +64,12 @@ class KlondikeGame(SolitaireGame):
         for i in range(4):
 
             if self.foundation[i]:
-                str_card = str(self.foundation[i][-1])
+                str_card = str(self.foundation[i][-1].FormatedforConsole())
                 if len(str_card) > 10:
-                    str_card = "[" + str_card[:9] + ".]"
+                    str_card = "[" + str_card + " ]"
                 row_home_str += str_card.ljust(10) if len(str_card) < 10 else str_card
             else:
-                row_home_str += "[   Empty   ]"
+                row_home_str += "[~  ~]"
         print(row_home_str)
 
 
@@ -78,20 +78,19 @@ class KlondikeGame(SolitaireGame):
             row = []
             for j in range(7):
                 if i < len(self.tableau[j]):
-                    card_str = str(self.tableau[j][i])
-                    card_str = "~" +card_str[:9] + ".~"
-                    if len(card_str) > 12:
-                        card_str = "~" +card_str[:9] + ".~"
+                    card_str = str(self.tableau[j][i].FormatedforConsole())
+                    card_str = "~" +card_str + "~"
+
 
                     row.append(card_str.ljust(12) if len(card_str) < 12 else card_str)
                 else:
                     if i < len(self.tableau_face_up[j]) + len(self.tableau[j]):
-                        card_str = str(self.tableau_face_up[j][i - len(self.tableau[j])])
-                        if len(card_str) > 12:
-                            card_str =  card_str[:9] + "."
-                        row.append(card_str.ljust(12) if len(card_str) < 12 else card_str)
+                        card_str = str(self.tableau_face_up[j][i - len(self.tableau[j])].FormatedforConsole())
+                        card_str = " " +card_str + " "
+
+                        row.append(card_str)
                     else:
-                        row.append("            ")
+                        row.append("     ")
             print(" | ".join(row))
 
     
@@ -110,6 +109,21 @@ class KlondikeGame(SolitaireGame):
         elif move.source == Position.Waste and move.destination in [Position.Column1, Position.Column2, Position.Column3, Position.Column4, 
                                 Position.Column5, Position.Column6, Position.Column7]:
             return self.move_waste_to_column(move)
+        # Case 4: moving from tableau to foundation
+        elif move.source in [Position.Column1, Position.Column2, Position.Column3, Position.Column4, 
+                                Position.Column5, Position.Column6, Position.Column7] and \
+                move.destination in [Position.Foundation1, Position.Foundation2, Position.Foundation3, Position.Foundation4]:
+            return self.move_column_to_foundation(move)
+        # Case 5: moving from foundation to tableau
+        elif move.source in [Position.Foundation1, Position.Foundation2, Position.Foundation3, Position.Foundation4] and \
+                move.destination in [Position.Column1, Position.Column2, Position.Column3, Position.Column4, 
+                                Position.Column5, Position.Column6, Position.Column7]:
+            print("Moving from foundation to tableau")
+            return self.move_foundation_to_column(move)
+        # Case 6: moving from waste to foundation
+        elif move.source == Position.Waste and move.destination in [Position.Foundation1, Position.Foundation2, Position.Foundation3, Position.Foundation4]:
+            return self.move_waste_to_foundation(move)
+        
         return False
 
 
@@ -233,6 +247,20 @@ class KlondikeGame(SolitaireGame):
                                                                      Position.Column3, Position.Column4, Position.Column5,
                                                                       Position.Column6, Position.Column7 ]:
             if self.waste:
+                #check the waste card is 1 rank down and opposite color to the card on the bottome of the destination face up pile
+                dest_index = move.destination.value[-1]
+                waste_card = self.waste[-1]
+                if self.tableau_face_up[int(dest_index)-1]:
+                    dest_card = self.tableau_face_up[int(dest_index)-1][-1]
+                    if (Card.RANKS.index(waste_card.rank) != Card.RANKS.index(dest_card.rank) - 1 or
+                        waste_card.suit == dest_card.suit):
+                        print("Move does not follow Klondike rules")
+                        return False
+                else:
+                    if waste_card.rank != 'K':
+                        print("Only a King can be moved to an empty column")
+                        return False
+
                 card = self.waste.pop()
                 dest_index = move.destination.value[-1]
                 self.tableau_face_up[int(dest_index)-1].append(card)
@@ -240,6 +268,115 @@ class KlondikeGame(SolitaireGame):
                 return True
         return False
         
+    def move_column_to_foundation(self, move: KlondikeMove) -> bool:
+        source_index = -1
+        dest_index = -1
+        
+        # check if the move is from a tableau 
+        if move.source in [Position.Column1, Position.Column2, Position.Column3, Position.Column4, 
+                           Position.Column5, Position.Column6, Position.Column7]:
+            source_index = move.source.value[-1]  # get the column number from the position
+            print(f"Source index: {source_index}")
+        
+        if move.destination in [Position.Foundation1, Position.Foundation2, Position.Foundation3, Position.Foundation4]:
+            dest_index = move.destination.value[-1]  # get the foundation number from the position
+            print(f"Destination index: {dest_index}")
+        # check that there are enough face-up cards in the source tableau
+        if source_index != -1 and dest_index != -1:
+            if move.num_cards != 1 or len(self.tableau_face_up[int(source_index)-1]) < 1:
+                print(f"Can only move one card to foundation from tableau {source_index}")
+                return False
+            moving_card = self.tableau_face_up[int(source_index)-1][-1]
+            if not moving_card:
+                print("No card to move")
+                return False
+            # check that the move follows Klondike rules (same suit, ascending rank)
+            if self.foundation[int(dest_index)-1]:
+                dest_card = self.foundation[int(dest_index)-1][-1]
+                if (Card.RANKS.index(moving_card.rank) != Card.RANKS.index(dest_card.rank) + 1 or
+                    moving_card.suit != dest_card.suit):
+                    print("Move does not follow Klondike rules")
+                    return False
+            else:
+                if moving_card.rank != 'A':
+                    print("Only an Ace can be moved to an empty foundation")
+                    return False
+            # Move the card from tableau to foundation
+            card = self.tableau_face_up[int(source_index)-1].pop()
+            self.foundation[int(dest_index)-1].append(card)
+            #if there are no more face-up cards in the source tableau, flip the top card of the source tableau if any
+            if not self.tableau_face_up[int(source_index)-1] and self.tableau[int(source_index)-1]:
+                card = self.tableau[int(source_index)-1].pop()
+                self.tableau_face_up[int(source_index)-1].append(card)
+            return True
+        return False
+
+
+    def move_foundation_to_column(self, move: KlondikeMove) -> bool:
+        source_index = -1
+        dest_index = -1
+        
+        # check if the move is from a foundation 
+        if move.source in [Position.Foundation1, Position.Foundation2, Position.Foundation3, Position.Foundation4]:
+            source_index = move.source.value[-1]  # get the foundation number from the position
+            print(f"Source index: {source_index}")
+        
+        if move.destination in [Position.Column1, Position.Column2, Position.Column3, Position.Column4, 
+                                Position.Column5, Position.Column6, Position.Column7]:
+            dest_index = move.destination.value[-1]  # get the column number from the position
+            print(f"Destination index: {dest_index}")
+        # check that there are enough cards in the source foundation
+        if source_index != -1 and dest_index != -1:
+            if move.num_cards != 1 or len(self.foundation[int(source_index)-1]) < 1:
+                print(f"Can only move one card from foundation {source_index}")
+                return False
+            moving_card = self.foundation[int(source_index)-1][-1]
+            if not moving_card:
+                print("No card to move")
+                return False
+            # check that the move follows Klondike rules (alternating colors, descending rank)
+            if self.tableau_face_up[int(dest_index)-1]:
+                dest_card = self.tableau_face_up[int(dest_index)-1][-1]
+                if (Card.RANKS.index(moving_card.rank) != Card.RANKS.index(dest_card.rank) - 1 and
+                    moving_card.color == dest_card.color):
+                    print(moving_card.rank, dest_card.rank, moving_card.color, dest_card.color)
+                    print("Move does not follow Klondike rules____")
+                    return False
+            else:
+                if moving_card.rank != 'K':
+                    print("Only a King can be moved to an empty tableau")
+                    return False
+            # Move the card from foundation to tableau
+            card = self.foundation[int(source_index)-1].pop()
+            self.tableau_face_up[int(dest_index)-1].append(card)
+            print(f"Moved card {card} from foundation {move.source} to column {move.destination}")
+            return True
+        return False
+
+
+    def move_waste_to_foundation(self, move: KlondikeMove) -> bool:
+        if move.source == Position.Waste and move.destination in [Position.Foundation1, Position.Foundation2, Position.Foundation3, Position.Foundation4]:
+            if len(self.waste) < 1 or move.num_cards != 1:
+                print("Can only move one card from waste to foundation")
+                return False
+            moving_card = self.waste[-1]
+            dest_index = move.destination.value[-1]
+            if self.foundation[int(dest_index)-1]:
+                dest_card = self.foundation[int(dest_index)-1][-1]
+                if (Card.RANKS.index(moving_card.rank) != Card.RANKS.index(dest_card.rank) + 1 or
+                    moving_card.suit != dest_card.suit):
+                    print("Move does not follow Klondike rules")
+                    return False
+            else:
+                if moving_card.rank != 'A':
+                    print("Only an Ace can be moved to an empty foundation")
+                    return False
+            card = self.waste.pop()
+            self.foundation[int(dest_index)-1].append(card)
+            print(f"Moved card {card} from waste to foundation {move.destination}")
+            return True
+        return False
+
 
     def save_game(self, filename: str):
         # Prepare the Layout.json template structure
@@ -348,6 +485,22 @@ class KlondikeGame(SolitaireGame):
 
 
 if __name__ == "__main__":
+
+
+    def parse_position(pos_str: str) -> Optional[Position]:
+        pos_str = pos_str.upper()
+        if pos_str == 'S':
+            return Position.Stock
+        elif pos_str == 'W':
+            return Position.Waste
+        else:        
+            for mem in Position.__members__.values():
+                if mem.value.upper() == pos_str:
+                    return mem
+
+        return None
+
+
     game = KlondikeGame(seed=42)
     game.deal()
     game.draw_layout_console()
@@ -373,9 +526,92 @@ if __name__ == "__main__":
     game.move(KlondikeMove(Position.Waste, Position.Column5, 1))
     print( "-------------------" )
 
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    print( "-------------------" )
+
+    game.move(KlondikeMove(Position.Column2, Position.Column6, 1))
+    print( "-------------------" )
+
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    print( "-------------------" )
+
+    game.move(KlondikeMove(Position.Waste, Position.Column7, 1))
+
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    print( "-------------------" )
+
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    print( "-------------------" )
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+
+
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    game.move(KlondikeMove(Position.Waste, Position.Column5, 1))
+
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    game.move(KlondikeMove(Position.Waste, Position.Column3, 1))
+
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+
+    game.move(KlondikeMove(Position.Waste, Position.Column6, 1))
+
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    game.move(KlondikeMove(Position.Waste, Position.Column1, 1))
+    game.move(KlondikeMove(Position.Column4, Position.Column1, 1))
+    game.move(KlondikeMove(Position.Column5, Position.Column4, 4))
+    game.move(KlondikeMove(Position.Column5, Position.Foundation1, 1))
+    game.move(KlondikeMove(Position.Column3, Position.Column6, 2))
+
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+    game.move(KlondikeMove(Position.Stock, Position.Waste, 1))
+
+    game.move(KlondikeMove(Position.Foundation1, Position.Column7, 1))
+
+    game.move(KlondikeMove(Position.Column7, Position.Foundation2, 1))
+
+
     game.draw_layout_console()
 
     
+    # Gameloop for user input to test moves
+    # while the user has not entered 'e' to exit or 'exit' to exit
+    # clear the console 
+    # diplays the currrent layout
+    # prompt the user to enter a move in the format 'source destination num_cards' e.g. 'C1 C3 2' to move 2 cards from column 1 to column 3
+    # source and destination can be C1 to C7 for columns, F1 to F4 for foundations, S for stock, W for waste
+    exit = False
+    while not exit:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        game.draw_layout_console()
+        user_input = input("Enter move (e to exit) in format 'source destination num_cards': ")
+        if user_input.lower() == 'e' or user_input.lower() == 'exit':
+            exit = True
+            continue
+        try:
+            source_str, dest_str, num_cards_str = user_input.split()
+
+            print(source_str)
+            source = parse_position(source_str)
+            destination = parse_position(dest_str)
+            num_cards = int(num_cards_str)
+            if source is None or destination is None:
+                print(f"source: {source}, destination: {destination}")
+                print("Invalid source or destination. Please use C1-C7 for columns, F1-F4 for foundations, S for stock, W for waste.")
+                input("Press Enter to continue...")
+                continue
+            move = KlondikeMove(source, destination, num_cards)
+            if game.move(move):
+                print("Move executed.")
+            else:
+                print("Move is invalid.")
+        except Exception as e:
+            print(f"Error processing move: {e}")
+        input("Press Enter to continue...")
 
 
 
