@@ -337,7 +337,7 @@ class KlondikeGame(SolitaireGame):
             # check that the move follows Klondike rules (alternating colors, descending rank)
             if self.tableau_face_up[int(dest_index)-1]:
                 dest_card = self.tableau_face_up[int(dest_index)-1][-1]
-                if (Card.RANKS.index(moving_card.rank) != Card.RANKS.index(dest_card.rank) - 1 and
+                if (Card.RANKS.index(moving_card.rank) != Card.RANKS.index(dest_card.rank) - 1 or
                     moving_card.color == dest_card.color):
                     print(moving_card.rank, dest_card.rank, moving_card.color, dest_card.color)
                     print("Move does not follow Klondike rules____")
