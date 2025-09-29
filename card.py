@@ -34,6 +34,24 @@ class Card:
         data = json.loads(json_str)
         return Card.from_dict(data)
     
+    def FormatedforConsole(self):
+        # Example: Return a string with ANSI color codes for console output
+        color_code = "\033[91m" if self.color == 'Red' else "\033[90m"
+        reset_code = "\033[0m"
+
+        special_characters = {
+            'Hearts': '\u2665',    # ♥
+            'Diamonds': '\u2666',  # ♦
+            'Clubs': '\u2663',     # ♣  
+            'Spades': '\u2660'     # ♠
+        }
+
+        formatted_suit = special_characters.get(self.suit, self.suit)
+        if self.rank == '10':
+            formatted_rank = self.rank
+        else:
+            formatted_rank = " " + self.rank 
+        return f"{color_code}{formatted_rank}{formatted_suit}{reset_code}"
 
 # --- IGNORE ---
 # Example usage:

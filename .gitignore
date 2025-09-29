@@ -168,3 +168,10 @@ cython_debug/
 
 # Project specific
 Layout.json
+scrap.py
+
+.github/
+.github/*
+__pycache__/
+__pycache__/*
+unknown.json
