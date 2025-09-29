@@ -450,7 +450,7 @@ class KlondikeGame(SolitaireGame):
         # Load properties
         properties = layout.get("Properties", {})
         self.draw_count = int(properties.get("Waste", 1))
-        seed_str = properties.get("Sead", "unknown")
+        seed_str = properties.get("Seed", "unknown")
         try:
             seed = int(seed_str)
         except ValueError:
