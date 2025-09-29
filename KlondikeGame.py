@@ -219,6 +219,7 @@ class KlondikeGame(SolitaireGame):
             #if there are no more face-up cards in the source tableau, flip the top card of the source tableau if any
             if not self.tableau_face_up[int(source_index)-1] and self.tableau[int(source_index)-1]:
                 card = self.tableau[int(source_index)-1].pop()
+                self.tableau_face_up[int(source_index)-1].append(card)
                 return True
         return False
 
