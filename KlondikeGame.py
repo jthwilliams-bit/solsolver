@@ -253,7 +253,7 @@ class KlondikeGame(SolitaireGame):
                 if self.tableau_face_up[int(dest_index)-1]:
                     dest_card = self.tableau_face_up[int(dest_index)-1][-1]
                     if (Card.RANKS.index(waste_card.rank) != Card.RANKS.index(dest_card.rank) - 1 or
-                        waste_card.suit == dest_card.suit):
+                        waste_card.color == dest_card.color):
                         print("Move does not follow Klondike rules")
                         return False
                 else:
