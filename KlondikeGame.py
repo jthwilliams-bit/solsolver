@@ -384,7 +384,7 @@ class KlondikeGame(SolitaireGame):
         layout = {
             "Properties": {
             "Type": "Klondike",
-            "Sead": str(getattr(self.deck, "seed", "unknown")),
+            "Seed": str(getattr(self.deck, "seed", "unknown")),
             "Moves": 0,
             "Waste": self.draw_count
             },
