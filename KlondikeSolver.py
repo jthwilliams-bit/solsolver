@@ -73,8 +73,8 @@ class KlondikeSolver:
         for i in range(7):
             for j in range(7):
                 if i != j and self.game.tableau[i]:
-                    for k in range(len(self.game.tableau[i])):
-                        moving_card = self.game.tableau[i][k]
+                    for k in range(len(self.game.tableau_face_up[i])):
+                        moving_card = self.game.tableau_face_up[i][k]
                         if self.can_move_to_tableau(moving_card, j):
                             possible_moves.append(KlondikeMove(Position(f"c{i+1}"), Position(f"c{j+1}"), len(self.game.tableau[i]) - k))
                             break  # Only need the first valid move
